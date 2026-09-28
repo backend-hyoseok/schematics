@@ -29,8 +29,7 @@
     "test:dev": "NODE_ENV=test NODE_OPTIONS=\"--require tsx/cjs\" vitest",
     "prerelease": "npm run build",
     "release": "release-it",
-    "prepare": "husky",
-    "test:integration": "NODE_ENV=test NODE_OPTIONS=\"--require tsx/cjs\" vitest run --config vitest.integration.config.ts"
+    "prepare": "husky"
   },
   "repository": {
     "type": "git",
