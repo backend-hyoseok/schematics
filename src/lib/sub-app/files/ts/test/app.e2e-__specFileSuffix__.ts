@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
-import { App } from 'supertest/types';
+import type { App } from 'supertest/types.js';
 import { <%= classify(name)%>Module } from './../src/<%= name %>.module<%= isEsm ? '.js' : '' %>';
 
 describe('<%= classify(name)%>Controller (e2e)', () => {

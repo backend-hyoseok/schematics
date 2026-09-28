@@ -289,6 +289,9 @@ describe('Generated project configuration', () => {
       // A namespace import is not callable under NodeNext ESM interop.
       expect(content).not.toContain("import * as request from 'supertest'");
       expect(content).toContain("import request from 'supertest'");
+      expect(content).toContain(
+        "import type { App } from 'supertest/types.js'",
+      );
     };
 
     it.each(['esm', 'cjs'] as const)(
