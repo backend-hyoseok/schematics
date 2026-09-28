@@ -290,7 +290,7 @@ describe('Generated project configuration', () => {
       expect(content).not.toContain("import * as request from 'supertest'");
       expect(content).toContain("import request from 'supertest'");
       expect(content).toContain(
-        `import type { App } from 'supertest/types${type === 'esm' ? '.js' : ''}';`,
+        `import { App } from 'supertest/types${type === 'esm' ? '.js' : ''}';`,
       );
     };
 
