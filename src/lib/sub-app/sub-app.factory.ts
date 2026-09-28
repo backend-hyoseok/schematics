@@ -67,6 +67,7 @@ export function main(options: SubAppOptions): Rule {
           ])(tree, context),
     addAppsToCliOptions(options.path!, options.name, appName),
     addTsConfigReference(options.path!, options.name),
+    ensureTestTsConfig(options),
     applyStartProdScript(options, appName),
     (tree) => {
       (options as any).isEsm = isEsmProject(tree);
@@ -215,6 +216,57 @@ function addTsConfigReference(projectRoot: string, projectName: string): Rule {
         const hasRef = tsconfig.references.some((ref) => ref.path === refPath);
         if (!hasRef) {
           tsconfig.references.push({ path: refPath });
+        }
+      },
+    );
+  };
+}
+
+/** Keep test files in a configured project without including them in app builds. */
+function ensureTestTsConfig(options: SubAppOptions): Rule {
+  return (host: Tree) => {
+    if (options.language !== 'ts' || !host.exists('tsconfig.json')) {
+      return host;
+    }
+
+    const configPath = 'tsconfig.spec.json';
+    if (!host.exists(configPath)) {
+      const root = readJsonFile<TsConfigPartialType>(host, 'tsconfig.json');
+      host.create(
+        configPath,
+        stringify(
+          {
+            extends: './tsconfig.json',
+            compilerOptions: {
+              composite: true,
+              declaration: true,
+              noEmit: true,
+              rootDir: '.',
+            },
+            // Include imported implementation files too: composite projects must
+            // list them, including sources in libraries and custom project roots.
+            include: ['**/*.ts'],
+            exclude: [
+              '**/node_modules/**',
+              root?.compilerOptions?.outDir || 'dist',
+            ],
+          },
+          null,
+          2,
+        ) + '\n',
+      );
+    }
+
+    // Preserve an existing user-owned test config and never duplicate its ref.
+    return updateJsonFile(
+      host,
+      'tsconfig.json',
+      (config: TsConfigPartialType) => {
+        config.references ??= [];
+        if (
+          !config.references.some((ref) => normalize(ref.path) === configPath)
+        ) {
+          config.references.push({ path: `./${configPath}` });
         }
       },
     );

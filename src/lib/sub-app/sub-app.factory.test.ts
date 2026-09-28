@@ -177,6 +177,7 @@ describe('SubApp Factory', () => {
     expect(tsconfig['references']).toEqual([
       { path: './apps/nestjs-schematics/tsconfig.app.json' },
       { path: './apps/project/tsconfig.app.json' },
+      { path: './tsconfig.spec.json' },
     ]);
   });
 
@@ -206,7 +207,35 @@ describe('SubApp Factory', () => {
       { path: './apps/existing-app/tsconfig.app.json' },
       { path: './apps/nestjs-schematics/tsconfig.app.json' },
       { path: './apps/new-app/tsconfig.app.json' },
+      { path: './tsconfig.spec.json' },
     ]);
+  });
+
+  it('should preserve an existing test config and reference it only once', async () => {
+    let tree = new UnitTestTree(new EmptyTree());
+    tree.create(
+      '/tsconfig.json',
+      JSON.stringify({
+        compilerOptions: {},
+        references: [{ path: 'tsconfig.spec.json' }],
+      }),
+    );
+    const custom =
+      '// User configuration\n' +
+      JSON.stringify({
+        extends: './tsconfig.json',
+        compilerOptions: { types: ['custom-runner'] },
+        include: ['custom-tests/**/*.ts'],
+      });
+    tree.create('/tsconfig.spec.json', custom);
+    tree = await runner.runSchematic('sub-app', { name: 'first' }, tree);
+    tree = await runner.runSchematic('sub-app', { name: 'second' }, tree);
+    expect(tree.readContent('/tsconfig.spec.json')).toBe(custom);
+    expect(
+      readJson(tree, '/tsconfig.json').references.filter(
+        (ref: { path: string }) => ref.path.endsWith('tsconfig.spec.json'),
+      ),
+    ).toEqual([{ path: 'tsconfig.spec.json' }]);
   });
 
   it('should sort sub-app names in nest-cli.json', async () => {
